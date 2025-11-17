@@ -1,6 +1,4 @@
-DROP TABLE IF EXISTS app_dynamic_table_definitions;
-
-CREATE TABLE app_dynamic_table_definitions
+CREATE TABLE IF NOT EXISTS app_dynamic_table_definitions
 (
     id BIGSERIAL PRIMARY KEY,
     table_name VARCHAR(255) UNIQUE NOT NULL,
@@ -8,9 +6,8 @@ CREATE TABLE app_dynamic_table_definitions
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-DROP TABLE IF EXISTS app_dynamic_column_definitions;
-
-CREATE TABLE app_dynamic_column_definitions(
+CREATE TABLE IF NOT EXISTS app_dynamic_column_definitions
+(
     id BIGSERIAL PRIMARY KEY,
     table_definition_id BIGINT NOT NULL REFERENCES app_dynamic_table_definitions(id) ON DELETE CASCADE,
     column_name VARCHAR(255) NOT NULL,

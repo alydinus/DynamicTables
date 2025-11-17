@@ -1,7 +1,11 @@
 spring:
   application:
     name: Dynamic Tables
-
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5433/dynamic_tables_db
+    username: user
+    password: 1
 
   liquibase:
-    change-log: classpath:/db/changelog/db.changelog-master.yaml
+    change-log: db/changelog/db.changelog-master.yaml
