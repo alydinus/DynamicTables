@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: Dynamic Tables
+
+
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
