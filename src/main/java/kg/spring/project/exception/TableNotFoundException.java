@@ -1,7 +1,12 @@
 package kg.spring.project.exception;
 
-public class TableNotFoundException extends Throwable {
-    public TableNotFoundException(String s) {
-        super(s);
+import lombok.Getter;
+
+@Getter
+public class TableNotFoundException extends RuntimeException {
+    private String path;
+    public TableNotFoundException(String msg, String path) {
+        super(msg);
+        this.path = path;
     }
 }

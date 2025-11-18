@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND.value(),
                 HttpStatus.NOT_FOUND.toString(),
                 Instant.now(),
-                "/api/v1/dynamic-tables/schemas"
+                ex.getPath()
         );
         return ResponseEntity.status(404).body(errorResponse);
     }
