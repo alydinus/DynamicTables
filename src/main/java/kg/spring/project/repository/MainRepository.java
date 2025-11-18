@@ -11,6 +11,8 @@ import java.util.List;
 public interface MainRepository {
     boolean isTableExists(String tableName);
 
+    boolean isDataExistsById(String tableName, Long id);
+
     void insertTableDefinition(String tableName, String userFriendlyName);
 
     Long getTableIdByName(String tableName);
@@ -28,4 +30,6 @@ public interface MainRepository {
     ObjectNode getDataById(String tableName, Long id);
 
     ObjectNode updateDataById(String tableName, Long id, JsonNode request);
+
+    Void deleteDataById(String tableName, Long id);
 }

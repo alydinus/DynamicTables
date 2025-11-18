@@ -70,4 +70,16 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(400).body(errorResponse);
     }
+
+    @ExceptionHandler(DataNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleDataNotFoundException(DataNotFoundException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.toString(),
+                Instant.now(),
+                ex.getPath()
+        );
+        return ResponseEntity.status(404).body(errorResponse);
+    }
 }

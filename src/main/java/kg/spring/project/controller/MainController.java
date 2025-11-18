@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -74,5 +75,13 @@ public class MainController {
             @RequestBody @Valid JsonNode request
     ) {
         return new ResponseEntity<>(mainService.updateDataById(tableName, id, request), HttpStatus.OK);
+    }
+
+    @DeleteMapping("data/{tableName}/{id}")
+    public ResponseEntity<Void> deleteDataById(
+            @PathVariable String tableName,
+            @PathVariable Long id
+    ) {
+        return new ResponseEntity<>(mainService.deleteDataById(tableName, id), HttpStatus.NO_CONTENT);
     }
 }

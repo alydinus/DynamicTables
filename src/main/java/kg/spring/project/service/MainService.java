@@ -23,4 +23,6 @@ public interface MainService {
     ObjectNode getDataById(String tableName, Long id);
 
     ObjectNode updateDataById(String tableName, Long id, @Valid JsonNode request);
+
+    Void deleteDataById(String tableName, Long id);
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import kg.spring.project.dto.request.ColumnRequest;
 import kg.spring.project.dto.request.TableCreationRequest;
+import kg.spring.project.exception.DataNotFoundException;
 import kg.spring.project.mapper.extractor.TableListExtractor;
 import kg.spring.project.mapper.extractor.TableModelExtractor;
 import kg.spring.project.model.Table;
@@ -80,6 +81,11 @@ public class MainRepositoryImpl implements MainRepository {
                 tableResponseExtractor,
                 tableName
         );
+    }
+
+    public boolean isDataExistsById(String tableName, Long id) {
+        Long doesIdExist = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + tableName + " WHERE id = ?", Long.class, id);
+        return doesIdExist != null && doesIdExist > 0;
     }
 
     public void createDynamicTable(Long tableId, TableCreationRequest request) {
@@ -223,6 +229,12 @@ public class MainRepositoryImpl implements MainRepository {
         jdbcTemplate.update(sql, params.toArray());
 
         return getDataById(tableName, id);
+    }
+
+    public Void deleteDataById(String tableName, Long id) {
+        String sql = "DELETE FROM " + tableName + " WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+        return null;
     }
 
     private Object convertJsonValue(JsonNode node) {

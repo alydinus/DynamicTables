@@ -87,13 +87,17 @@ public class MainServiceImpl implements MainService {
 
     public ObjectNode getDataById(String tableName, Long id) {
         boolean tableExists = repository.isTableExists(tableName);
+        boolean dataExists = repository.isDataExistsById(tableName, id);
         if (!tableExists) throw new TableNotFoundException("Table not found", "/api/v1/dynamic-tables/data/" + tableName);
+        if (!dataExists) throw new TableNotFoundException("Data not found", "/api/v1/dynamic-tables/data/" + tableName + "/" + id);
         return repository.getDataById(tableName, id);
     }
 
     public ObjectNode updateDataById(String tableName, Long id, JsonNode data) {
         boolean tableExists = repository.isTableExists(tableName);
+        boolean dataExists = repository.isDataExistsById(tableName, id);
         if (!tableExists) throw new TableNotFoundException("Table not found", "/api/v1/dynamic-tables/data/" + tableName);
+        if (!dataExists) throw new TableNotFoundException("Data not found", "/api/v1/dynamic-tables/data/" + tableName + "/" + id);
 
         Table table = repository.getTableByName(tableName);
 
@@ -116,6 +120,14 @@ public class MainServiceImpl implements MainService {
         });
 
         return repository.updateDataById(tableName, id, data);
+    }
+
+    public Void deleteDataById(String tableName, Long id) {
+        boolean tableExists = repository.isTableExists(tableName);
+        boolean dataExists = repository.isDataExistsById(tableName, id);
+        if (!tableExists) throw new TableNotFoundException("Table not found", "/api/v1/dynamic-tables/data/" + tableName);
+        if (!dataExists) throw new TableNotFoundException("Data not found", "/api/v1/dynamic-tables/data/" + tableName + "/" + id);
+        return repository.deleteDataById(tableName, id);
     }
 
 }
