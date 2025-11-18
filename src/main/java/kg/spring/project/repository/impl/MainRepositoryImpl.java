@@ -11,9 +11,14 @@ import kg.spring.project.model.Table;
 import kg.spring.project.repository.MainRepository;
 import kg.spring.project.util.TypeMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -138,6 +143,39 @@ public class MainRepositoryImpl implements MainRepository {
                         """,
                 tableListExtractor
         );
+    }
+
+    public Page<ObjectNode> getAllDataFromTable(String tableName, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page, size);
+        String countSql = "SELECT COUNT(*) FROM " + tableName;
+        Long totalElements = jdbcTemplate.queryForObject(countSql, Long.class);
+        if (totalElements == null || totalElements == 0) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+        String dataSql = "SELECT * FROM " + tableName + " ORDER BY id ASC LIMIT ? OFFSET ?";
+
+        List<ObjectNode> content = jdbcTemplate.query(
+                dataSql,
+                (rs, rowNum) -> {
+                    ObjectNode row = objectMapper.createObjectNode();
+                    int columnCount = rs.getMetaData().getColumnCount();
+
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = rs.getMetaData().getColumnName(i);
+                        Object value = rs.getObject(i);
+                        if (value == null) {
+                            row.putNull(columnName);
+                        } else {
+                            row.putPOJO(columnName, value);
+                        }
+                    }
+                    return row;
+                },
+                pageable.getPageSize(),
+                pageable.getOffset()
+        );
+
+        return new PageImpl<>(content, pageable, totalElements);
     }
 
     private Object convertJsonValue(JsonNode node) {

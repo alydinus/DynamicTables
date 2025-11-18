@@ -14,6 +14,7 @@ import kg.spring.project.repository.MainRepository;
 import kg.spring.project.service.MainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,6 +77,12 @@ public class MainServiceImpl implements MainService {
 
     public List<Table> getAllTables() {
         return repository.getAllTables();
+    }
+
+    public Page<ObjectNode> getAllDataFromTable(String tableName, Integer page, Integer size) {
+        boolean tableExists = repository.isTableExists(tableName);
+        if (!tableExists) throw new TableNotFoundException("Table not found", "/api/v1/dynamic-tables/data/" + tableName);
+        return repository.getAllDataFromTable(tableName, page, size);
     }
 
 }

@@ -1,12 +1,15 @@
 package kg.spring.project.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import kg.spring.project.dto.request.TableCreationRequest;
 import kg.spring.project.dto.response.TableCreatedResponse;
 import kg.spring.project.mapper.TableMapper;
 import kg.spring.project.service.MainService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -44,5 +48,14 @@ public class MainController {
     @PostMapping("/data/{tableName}")
     public ResponseEntity<?> insertData(@PathVariable String tableName, @RequestBody @Valid JsonNode request) {
         return new ResponseEntity<>(mainService.insertDataIntoTable(tableName, request), HttpStatus.OK);
+    }
+
+    @GetMapping("/data/{tableName}")
+    public Page<ObjectNode> getAllData(
+            @PathVariable String tableName,
+            @RequestParam (required = false, defaultValue = "0") Integer page,
+            @RequestParam (required = false, defaultValue = "20") Integer size
+    ) {
+        return mainService.getAllDataFromTable(tableName, page, size);
     }
 }
