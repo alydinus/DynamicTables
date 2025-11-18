@@ -91,4 +91,31 @@ public class MainServiceImpl implements MainService {
         return repository.getDataById(tableName, id);
     }
 
+    public ObjectNode updateDataById(String tableName, Long id, JsonNode data) {
+        boolean tableExists = repository.isTableExists(tableName);
+        if (!tableExists) throw new TableNotFoundException("Table not found", "/api/v1/dynamic-tables/data/" + tableName);
+
+        Table table = repository.getTableByName(tableName);
+
+        List<Column> columns = table.columns();
+
+        Map<String, JsonNode> dataMap = new HashMap<>();
+        Iterator<String> stringIterator = data.fieldNames();
+        while (stringIterator.hasNext()) {
+            String fieldName = stringIterator.next();
+            dataMap.put(fieldName, data.get(fieldName));
+        }
+        for (String key : dataMap.keySet()) {
+            if (columns.stream().noneMatch(column -> column.name().equals(key))) {
+                throw new UnexpectedColumnException("Unexpected column: " + key, "/api/v1/dynamic-tables/data/" + tableName);
+            }
+        }
+        columns.forEach(column -> {
+            if (!data.has(column.name())) throw new MissingColumnException("Missing column: " + column.name(), "/api/v1/dynamic-tables/data/" + tableName);
+            if (!column.isNullable() && data.get(column.name()).isNull()) throw new NullValueForNonNullColumnException("Null value for non-nullable column: " + column.name(), "/api/v1/dynamic-tables/data/" + tableName);
+        });
+
+        return repository.updateDataById(tableName, id, data);
+    }
+
 }

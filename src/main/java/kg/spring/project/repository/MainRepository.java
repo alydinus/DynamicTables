@@ -26,4 +26,6 @@ public interface MainRepository {
     Page<ObjectNode> getAllDataFromTable(String tableName, Integer page, Integer size);
 
     ObjectNode getDataById(String tableName, Long id);
+
+    ObjectNode updateDataById(String tableName, Long id, JsonNode request);
 }

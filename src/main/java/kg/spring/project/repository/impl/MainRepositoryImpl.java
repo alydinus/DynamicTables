@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -199,6 +200,29 @@ public class MainRepositoryImpl implements MainRepository {
                 },
                 id
         );
+    }
+
+    public ObjectNode updateDataById(String tableName, Long id, JsonNode request) {
+        Iterator<String> fields = request.fieldNames();
+        Map<String, Object> jsonFields = new LinkedHashMap<>();
+
+        while (fields.hasNext()) {
+            String field = fields.next();
+            jsonFields.put(field, convertJsonValue(request.get(field)));
+        }
+
+        String setClause = jsonFields.keySet().stream()
+                .map(key -> key + " = ?")
+                .collect(Collectors.joining(", "));
+
+        String sql = "UPDATE " + tableName + " SET " + setClause + " WHERE id = ?";
+
+        List<Object> params = new ArrayList<>(jsonFields.values());
+        params.add(id);
+
+        jdbcTemplate.update(sql, params.toArray());
+
+        return getDataById(tableName, id);
     }
 
     private Object convertJsonValue(JsonNode node) {

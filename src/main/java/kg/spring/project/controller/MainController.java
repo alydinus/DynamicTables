@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -64,5 +65,14 @@ public class MainController {
             @PathVariable Long id
     ) {
         return new ResponseEntity<>(mainService.getDataById(tableName, id), HttpStatus.OK);
+    }
+
+    @PutMapping("data/{tableName}/{id}")
+    public ResponseEntity<ObjectNode> updateDataById(
+            @PathVariable String tableName,
+            @PathVariable Long id,
+            @RequestBody @Valid JsonNode request
+    ) {
+        return new ResponseEntity<>(mainService.updateDataById(tableName, id, request), HttpStatus.OK);
     }
 }
