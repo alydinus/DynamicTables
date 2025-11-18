@@ -6,6 +6,5 @@ spring:
     url: jdbc:postgresql://localhost:5433/dynamic_tables_db
     username: user
     password: 1
-
   liquibase:
     change-log: db/changelog/db.changelog-master.yaml
