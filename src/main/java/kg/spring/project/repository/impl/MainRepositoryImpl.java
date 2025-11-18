@@ -178,6 +178,29 @@ public class MainRepositoryImpl implements MainRepository {
         return new PageImpl<>(content, pageable, totalElements);
     }
 
+    public ObjectNode getDataById(String tableName, Long id) {
+        String sql = "SELECT * FROM " + tableName + " WHERE id = ?";
+        return jdbcTemplate.queryForObject(
+                sql,
+                (rs, rowNum) -> {
+                    ObjectNode row = objectMapper.createObjectNode();
+                    int columnCount = rs.getMetaData().getColumnCount();
+
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = rs.getMetaData().getColumnName(i);
+                        Object value = rs.getObject(i);
+                        if (value == null) {
+                            row.putNull(columnName);
+                        } else {
+                            row.putPOJO(columnName, value);
+                        }
+                    }
+                    return row;
+                },
+                id
+        );
+    }
+
     private Object convertJsonValue(JsonNode node) {
         if (node.isInt()) return node.intValue();
         if (node.isLong()) return node.longValue();

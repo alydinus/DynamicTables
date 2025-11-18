@@ -9,7 +9,6 @@ import kg.spring.project.mapper.TableMapper;
 import kg.spring.project.service.MainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,5 +56,13 @@ public class MainController {
             @RequestParam (required = false, defaultValue = "20") Integer size
     ) {
         return mainService.getAllDataFromTable(tableName, page, size);
+    }
+
+    @GetMapping("data/{tableName}/{id}")
+    public ResponseEntity<ObjectNode> getDataById(
+            @PathVariable String tableName,
+            @PathVariable Long id
+    ) {
+        return new ResponseEntity<>(mainService.getDataById(tableName, id), HttpStatus.OK);
     }
 }

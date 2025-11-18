@@ -85,4 +85,10 @@ public class MainServiceImpl implements MainService {
         return repository.getAllDataFromTable(tableName, page, size);
     }
 
+    public ObjectNode getDataById(String tableName, Long id) {
+        boolean tableExists = repository.isTableExists(tableName);
+        if (!tableExists) throw new TableNotFoundException("Table not found", "/api/v1/dynamic-tables/data/" + tableName);
+        return repository.getDataById(tableName, id);
+    }
+
 }

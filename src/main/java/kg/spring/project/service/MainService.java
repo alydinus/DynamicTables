@@ -18,4 +18,6 @@ public interface MainService {
     List<Table> getAllTables();
 
     Page<ObjectNode> getAllDataFromTable(String tableName, Integer page, Integer size);
+
+    ObjectNode getDataById(String tableName, Long id);
 }
