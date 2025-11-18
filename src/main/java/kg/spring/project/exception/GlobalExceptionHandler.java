@@ -34,4 +34,40 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(404).body(errorResponse);
     }
+
+    @ExceptionHandler(UnexpectedColumnException.class)
+    public ResponseEntity<ErrorResponse> handleUnexpectedColumnException(UnexpectedColumnException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.toString(),
+                Instant.now(),
+                ex.getPath()
+        );
+        return ResponseEntity.status(400).body(errorResponse);
+    }
+
+    @ExceptionHandler(MissingColumnException.class)
+    public ResponseEntity<ErrorResponse> handleMissingColumnException(MissingColumnException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.toString(),
+                Instant.now(),
+                ex.getPath()
+        );
+        return ResponseEntity.status(400).body(errorResponse);
+    }
+
+    @ExceptionHandler(NullValueForNonNullColumnException.class)
+    public ResponseEntity<ErrorResponse> handleNullValueForNonNullColumnException(NullValueForNonNullColumnException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.toString(),
+                Instant.now(),
+                ex.getPath()
+        );
+        return ResponseEntity.status(400).body(errorResponse);
+    }
 }

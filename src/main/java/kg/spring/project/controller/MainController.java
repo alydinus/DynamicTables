@@ -1,5 +1,6 @@
 package kg.spring.project.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.Valid;
 import kg.spring.project.dto.request.TableCreationRequest;
 import kg.spring.project.dto.response.TableCreatedResponse;
@@ -31,5 +32,10 @@ public class MainController {
     @GetMapping("/schemas/{tableName}")
     public ResponseEntity<TableCreatedResponse> getTable(@PathVariable String tableName) {
         return new ResponseEntity<>(tableMapper.toTableCreatedResponse(mainService.getTableByName(tableName)), HttpStatus.OK);
+    }
+
+    @PostMapping("/data/{tableName}")
+    public ResponseEntity<?> insertData(@PathVariable String tableName, @RequestBody @Valid JsonNode request) {
+        return new ResponseEntity<>(mainService.insertDataIntoTable(tableName, request), HttpStatus.OK);
     }
 }

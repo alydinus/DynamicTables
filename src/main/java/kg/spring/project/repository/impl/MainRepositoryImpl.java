@@ -1,14 +1,23 @@
 package kg.spring.project.repository.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import kg.spring.project.dto.request.ColumnRequest;
 import kg.spring.project.dto.request.TableCreationRequest;
-import kg.spring.project.exception.TableNotFoundException;
 import kg.spring.project.mapper.extractor.TableModelExtractor;
 import kg.spring.project.model.Table;
 import kg.spring.project.repository.MainRepository;
+import kg.spring.project.util.TypeMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -16,6 +25,8 @@ public class MainRepositoryImpl implements MainRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final TableModelExtractor tableResponseExtractor;
+    private final TypeMapper typeMapper;
+    private final ObjectMapper objectMapper;
 
     public boolean isTableExists(String tableName) {
         Integer exists = jdbcTemplate.queryForObject(
@@ -39,7 +50,7 @@ public class MainRepositoryImpl implements MainRepository {
     }
 
     public Table getTableByName(String tableName) {
-        Table table = jdbcTemplate.query(
+        return jdbcTemplate.query(
                 """
                         SELECT tables.id as table_id,
                                tables.table_name as table_name,
@@ -61,7 +72,6 @@ public class MainRepositoryImpl implements MainRepository {
                 tableResponseExtractor,
                 tableName
         );
-        return table;
     }
 
     public void createDynamicTable(Long tableId, TableCreationRequest request) {
@@ -70,7 +80,7 @@ public class MainRepositoryImpl implements MainRepository {
         ddl.append("id BIGSERIAL PRIMARY KEY");
 
         for (ColumnRequest col : request.columns()) {
-            String postgresType = mapToPostgresType(col.type());
+            String postgresType = typeMapper.mapToPostgresType(col.type());
             ddl.append(", ").append(col.name()).append(" ").append(postgresType);
             if (!col.isNullable()) ddl.append(" NOT NULL");
             jdbcTemplate.update("INSERT INTO app_dynamic_column_definitions(table_definition_id, column_name, column_type, postgres_column_type, is_nullable) VALUES (?,?,?,?,?)",
@@ -80,16 +90,38 @@ public class MainRepositoryImpl implements MainRepository {
         jdbcTemplate.execute(ddl.toString());
     }
 
-    private String mapToPostgresType(String type) {
-        return switch (type.toUpperCase()) {
-            case "TEXT" -> "TEXT";
-            case "INTEGER" -> "INTEGER";
-            case "BIGINT" -> "BIGINT";
-            case "DECIMAL" -> "NUMERIC(19,4)";
-            case "BOOLEAN" -> "BOOLEAN";
-            case "DATE" -> "DATE";
-            case "TIMESTAMP" -> "TIMESTAMP WITHOUT TIME ZONE";
-            default -> throw new IllegalArgumentException("Unsupported type: " + type);
-        };
+    public ObjectNode insertDataIntoTable(String tableName, JsonNode data) {
+        Iterator<String> fields = data.fieldNames();
+        Map<String, Object> jsonFields = new LinkedHashMap<>();
+
+        while (fields.hasNext()) {
+            String field = fields.next();
+            jsonFields.put(field, convertJsonValue(data.get(field)));
+        }
+
+        String columns = String.join(", ", jsonFields.keySet());
+
+        String placeholders = jsonFields.keySet().stream()
+                .map(k -> "?")
+                .collect(Collectors.joining(", "));
+
+        String sql = "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + placeholders + ") RETURNING id";
+
+        Long id = jdbcTemplate.queryForObject(sql, jsonFields.values().toArray(), Long.class);
+        ObjectNode response = objectMapper.createObjectNode();
+        response.put("id", id);
+        jsonFields.forEach(response::putPOJO);
+        return response;
+
     }
+    private Object convertJsonValue(JsonNode node) {
+        if (node.isInt()) return node.intValue();
+        if (node.isLong()) return node.longValue();
+        if (node.isDouble()) return node.doubleValue();
+        if (node.isBoolean()) return node.booleanValue();
+        if (node.isTextual()) return node.textValue();
+        if (node.isNull()) return null;
+        return node.toString();
+    }
+
 }
