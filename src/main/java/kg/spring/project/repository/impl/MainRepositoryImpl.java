@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import kg.spring.project.dto.request.ColumnRequest;
 import kg.spring.project.dto.request.TableCreationRequest;
+import kg.spring.project.mapper.extractor.TableListExtractor;
 import kg.spring.project.mapper.extractor.TableModelExtractor;
 import kg.spring.project.model.Table;
 import kg.spring.project.repository.MainRepository;
@@ -13,9 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ public class MainRepositoryImpl implements MainRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final TableModelExtractor tableResponseExtractor;
+    private final TableListExtractor tableListExtractor;
     private final TypeMapper typeMapper;
     private final ObjectMapper objectMapper;
 
@@ -114,6 +116,30 @@ public class MainRepositoryImpl implements MainRepository {
         return response;
 
     }
+
+    public List<Table> getAllTables() {
+        return jdbcTemplate.query(
+                """
+                        SELECT tables.id as table_id,
+                               tables.table_name as table_name,
+                               tables.user_friendly_name as user_friendly_name,
+                               tables.created_at as table_created_at,
+                               columns.id as column_id,
+                               columns.table_definition_id as table_definition_id,
+                               columns.column_name as column_name,
+                               columns.column_type as column_type,
+                               columns.postgres_column_type as postgres_column_type,
+                               columns.is_nullable as is_nullable,
+                               columns.is_primary_key_internal as is_primary_key_internal,
+                               columns.created_at as column_created_at
+                        FROM app_dynamic_column_definitions columns
+                        JOIN app_dynamic_table_definitions tables
+                        ON columns.table_definition_id = tables.id
+                        """,
+                tableListExtractor
+        );
+    }
+
     private Object convertJsonValue(JsonNode node) {
         if (node.isInt()) return node.intValue();
         if (node.isLong()) return node.longValue();

@@ -74,4 +74,8 @@ public class MainServiceImpl implements MainService {
         }
     }
 
+    public List<Table> getAllTables() {
+        return repository.getAllTables();
+    }
+
 }

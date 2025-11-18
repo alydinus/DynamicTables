@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/dynamic-tables")
 @RequiredArgsConstructor
@@ -32,6 +34,11 @@ public class MainController {
     @GetMapping("/schemas/{tableName}")
     public ResponseEntity<TableCreatedResponse> getTable(@PathVariable String tableName) {
         return new ResponseEntity<>(tableMapper.toTableCreatedResponse(mainService.getTableByName(tableName)), HttpStatus.OK);
+    }
+
+    @GetMapping("/schemas")
+    public ResponseEntity<List<TableCreatedResponse>> getAllTables() {
+        return new ResponseEntity<>(mainService.getAllTables().stream().map(tableMapper::toTableCreatedResponse).toList(), HttpStatus.OK);
     }
 
     @PostMapping("/data/{tableName}")
