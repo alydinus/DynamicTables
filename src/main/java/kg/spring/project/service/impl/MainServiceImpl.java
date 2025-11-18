@@ -5,6 +5,7 @@ import kg.spring.project.dto.request.TableCreationRequest;
 import kg.spring.project.dto.response.ColumnResponse;
 import kg.spring.project.dto.response.TableCreatedResponse;
 import kg.spring.project.exception.ConflictException;
+import kg.spring.project.mapper.TableResponseExtractor;
 import kg.spring.project.service.MainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,6 +20,7 @@ import java.util.List;
 public class MainServiceImpl implements MainService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final TableResponseExtractor tableResponseExtractor;
 
     @Transactional
     public TableCreatedResponse createTable(TableCreationRequest request) {
@@ -34,6 +36,7 @@ public class MainServiceImpl implements MainService {
                 "SELECT id FROM app_dynamic_table_definitions WHERE table_name = ?",
                 Long.class, request.tableName()
         );
+
         createDynamicTable(tableId, request);
 
         return mapToResponse(tableId);
@@ -69,35 +72,24 @@ public class MainServiceImpl implements MainService {
     }
 
     private TableCreatedResponse mapToResponse(long tableId) {
-        TableCreatedResponse table = jdbcTemplate.queryForObject("""
-                    SELECT id, table_name, user_friendly_name
-                    FROM app_dynamic_table_definitions
-                    WHERE id = ?
-                """, (rs, rowNum) -> new TableCreatedResponse(
-                rs.getLong("id"),
-                rs.getString("table_name"),
-                rs.getString("user_friendly_name"),
-                new ArrayList<>()
-        ), tableId);
 
-        List<ColumnResponse> columns = jdbcTemplate.query("""
-                    SELECT column_name, column_type, postgres_column_type, is_nullable, is_primary_key_internal
-                    FROM app_dynamic_column_definitions
-                    WHERE table_definition_id = ?
-                    ORDER BY id
-                """, (rs, rowNum) -> new ColumnResponse(
-                rs.getString("column_name"),
-                rs.getString("column_type"),
-                rs.getString("postgres_column_type"),
-                rs.getBoolean("is_nullable"),
-                rs.getBoolean("is_primary_key_internal")
-        ), tableId);
-
-        return new TableCreatedResponse(
-                table.id(),
-                table.tableName(),
-                table.userFriendlyName(),
-                columns
+        return jdbcTemplate.query(
+                """
+                    SELECT tables.id as table_id,
+                           tables.table_name as table_name,
+                           tables.user_friendly_name as user_friendly_name,
+                           columns.column_name as column_name,
+                           columns.column_type as column_type,
+                           columns.postgres_column_type as postgres_column_type,
+                           columns.is_nullable as is_nullable,
+                           columns.is_primary_key_internal as is_primary_key_internal
+                    FROM app_dynamic_column_definitions columns
+                    JOIN app_dynamic_table_definitions tables
+                    ON columns.table_definition_id = tables.id
+                    WHERE tables.id = ?
+                    """,
+                tableResponseExtractor,
+                tableId
         );
     }
 }
