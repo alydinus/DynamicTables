@@ -10,7 +10,4 @@ public record Table(
         List<Column> columns,
         Instant createdAt
 ) {
-    public Table(Long id, String tableName, String userFriendlyName, Instant createdAt) {
-        this(id, tableName, userFriendlyName, null, createdAt);
-    }
 }
