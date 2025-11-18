@@ -1,12 +1,8 @@
 package kg.spring.project.service.impl;
 
-import kg.spring.project.dto.request.ColumnRequest;
 import kg.spring.project.dto.request.TableCreationRequest;
-import kg.spring.project.dto.response.TableCreatedResponse;
 import kg.spring.project.exception.DuplicateTableException;
 import kg.spring.project.exception.TableNotFoundException;
-import kg.spring.project.mapper.TableMapper;
-import kg.spring.project.mapper.extractor.TableResponseExtractor;
 import kg.spring.project.model.Table;
 import kg.spring.project.repository.MainRepository;
 import kg.spring.project.service.MainService;
@@ -19,8 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class MainServiceImpl implements MainService {
 
     private final MainRepository repository;
-    private final TableMapper tableMapper;
-    private final TableResponseExtractor tableResponseExtractor;
 
     @Transactional
     public Table createTable(TableCreationRequest request) {
