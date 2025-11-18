@@ -8,16 +8,11 @@ import kg.spring.project.exception.ConflictException;
 import kg.spring.project.service.MainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -31,39 +26,33 @@ public class MainServiceImpl implements MainService {
                 "SELECT count(*) FROM app_dynamic_table_definitions WHERE table_name = ?",
                 Integer.class, request.tableName());
         if (exists != null && exists > 0) throw new ConflictException("Table already exists");
+        jdbcTemplate.update(
+                "INSERT INTO app_dynamic_table_definitions(table_name, user_friendly_name) VALUES (?, ?)",
+                request.tableName(), request.userFriendlyName()
+        );
+        Long tableId = jdbcTemplate.queryForObject(
+                "SELECT id FROM app_dynamic_table_definitions WHERE table_name = ?",
+                Long.class, request.tableName()
+        );
+        createDynamicTable(tableId, request);
 
-        KeyHolder kh = new GeneratedKeyHolder();
-        jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(
-                    "INSERT INTO app_dynamic_table_definitions(table_name,user_friendly_name) VALUES (?,?)",
-                    Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, request.tableName());
-            ps.setString(2, request.userFriendlyName());
-            return ps;
-        }, kh);
-        Number key = (Number) Objects.requireNonNull(kh.getKeys()).get("id");
-        long tableId = Objects.requireNonNull(key).longValue();
+        return mapToResponse(tableId);
+    }
 
-
+    private void createDynamicTable(Long tableId, TableCreationRequest request) {
         StringBuilder ddl = new StringBuilder();
         ddl.append("CREATE TABLE ").append(request.tableName()).append(" (");
         ddl.append("id BIGSERIAL PRIMARY KEY");
-
-        jdbcTemplate.update("INSERT INTO app_dynamic_column_definitions(table_definition_id, column_name, column_type, postgres_column_type, is_nullable, is_primary_key_internal) VALUES (?,?,?,?,?,?)",
-                tableId, "id", "BIGINT", "BIGINT", false, true);
 
         for (ColumnRequest col : request.columns()) {
             String postgresType = mapToPostgresType(col.type());
             ddl.append(", ").append(col.name()).append(" ").append(postgresType);
             if (!col.isNullable()) ddl.append(" NOT NULL");
-
             jdbcTemplate.update("INSERT INTO app_dynamic_column_definitions(table_definition_id, column_name, column_type, postgres_column_type, is_nullable) VALUES (?,?,?,?,?)",
                     tableId, col.name(), col.type(), postgresType, col.isNullable());
         }
-        ddl.append(")");
+        ddl.append(");");
         jdbcTemplate.execute(ddl.toString());
-
-        return mapToResponse(tableId);
     }
 
     private String mapToPostgresType(String type) {
@@ -80,11 +69,11 @@ public class MainServiceImpl implements MainService {
     }
 
     private TableCreatedResponse mapToResponse(long tableId) {
-        var table = jdbcTemplate.queryForObject("""
-        SELECT id, table_name, user_friendly_name
-        FROM app_dynamic_table_definitions
-        WHERE id = ?
-    """, (rs, rowNum) -> new TableCreatedResponse(
+        TableCreatedResponse table = jdbcTemplate.queryForObject("""
+                    SELECT id, table_name, user_friendly_name
+                    FROM app_dynamic_table_definitions
+                    WHERE id = ?
+                """, (rs, rowNum) -> new TableCreatedResponse(
                 rs.getLong("id"),
                 rs.getString("table_name"),
                 rs.getString("user_friendly_name"),
@@ -92,11 +81,11 @@ public class MainServiceImpl implements MainService {
         ), tableId);
 
         List<ColumnResponse> columns = jdbcTemplate.query("""
-        SELECT column_name, column_type, postgres_column_type, is_nullable, is_primary_key_internal
-        FROM app_dynamic_column_definitions
-        WHERE table_definition_id = ?
-        ORDER BY id
-    """, (rs, rowNum) -> new ColumnResponse(
+                    SELECT column_name, column_type, postgres_column_type, is_nullable, is_primary_key_internal
+                    FROM app_dynamic_column_definitions
+                    WHERE table_definition_id = ?
+                    ORDER BY id
+                """, (rs, rowNum) -> new ColumnResponse(
                 rs.getString("column_name"),
                 rs.getString("column_type"),
                 rs.getString("postgres_column_type"),
